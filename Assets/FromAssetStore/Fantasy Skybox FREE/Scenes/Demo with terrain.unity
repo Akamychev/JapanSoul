@@ -817,7 +817,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f27da05b2f14fdb49930dc57495e7457, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.92
+      value: -2.023
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f27da05b2f14fdb49930dc57495e7457, type: 3}
       propertyPath: m_LocalPosition.y
@@ -825,7 +825,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f27da05b2f14fdb49930dc57495e7457, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -6.88
+      value: -7.804
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f27da05b2f14fdb49930dc57495e7457, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1224,9 +1224,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 3
-  rotationSpeed: 5
+  runSpeed: 6
+  rotationSpeed: 10
+  friction: 0.5
+  acceleration: 10
+  deceleration: 5
   gravity: -9.81
   jumpHeight: 2
+  groundCheckDistance: 0.01
+  jumpCooldown: 2
 --- !u!143 &1530072982
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1237,7 +1243,7 @@ CharacterController:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1246,13 +1252,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2.15
+  m_Height: 1.79
   m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: -0.06, y: 0.96, z: 0}
+  m_Center: {x: 0, y: 0.96, z: 0}
 --- !u!1001 &1551715331
 PrefabInstance:
   m_ObjectHideFlags: 0
