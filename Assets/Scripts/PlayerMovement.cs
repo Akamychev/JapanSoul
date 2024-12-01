@@ -9,9 +9,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpHeight = 2f;            // Высота прыжка (если нужно)
     [SerializeField] private float groundCheckDistance = 0.1f; // Расстояние для проверки земли
     [SerializeField] private float jumpCooldown = 0.2f;        // Кулдаун для прыжка (в секундах)
+    [SerializeField] private LayerMask groundLayer;
 
     private Animator _animator;                                // Ссылка на Animator
-    private CharacterController _characterController;          // Ссылка на CharacterController
+    private Rigidbody _rigidbody;                              // Ссылка на Rigidbody
     private Vector3 _moveDirection;                            // Движение игрока
     private Vector3 _velocity;                                 // Вертикальная скорость (для гравитации)
     
@@ -26,7 +27,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
-        _characterController = GetComponent<CharacterController>();
+        _rigidbody = GetComponent<Rigidbody>();
+        _rigidbody.freezeRotation = true;
         _animator = GetComponent<Animator>();
         _lastJumpTime = -jumpCooldown;
         _lastLandingTime = -jumpCooldown;
@@ -49,30 +51,32 @@ public class PlayerMovement : MonoBehaviour
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        
+
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
-        
+
         if (vertical < 0)
-        {
             vertical = 0;
-        }
-        
+
         Vector3 inputDirection = new Vector3(horizontal, 0, vertical).normalized;
 
         if (inputDirection.magnitude >= 0.1f)
         {
             float currentSpeed = isRunning ? runSpeed : moveSpeed;
+            Vector3 desiredVelocity = transform.TransformDirection(inputDirection) * currentSpeed;
+
             
-            _moveDirection = Vector3.Lerp(_moveDirection, transform.TransformDirection(inputDirection) * currentSpeed, 0.1f);
+            Vector3 velocity = Vector3.Lerp(_rigidbody.velocity, new Vector3(desiredVelocity.x, _rigidbody.velocity.y, desiredVelocity.z), Time.deltaTime * 10f);
+            _rigidbody.velocity = velocity;
+            _moveDirection = velocity; 
             _isMoving = true;
         }
         else
         {
-            _moveDirection = Vector3.Lerp(_moveDirection, Vector3.zero, 0.1f);
+            Vector3 velocity = Vector3.Lerp(_rigidbody.velocity, new Vector3(0, _rigidbody.velocity.y, 0), Time.deltaTime * 10f);
+            _rigidbody.velocity = velocity;
+            _moveDirection = velocity;
             _isMoving = false;
         }
-        
-        _characterController.Move(_moveDirection * Time.deltaTime);
     }
 
     /// <summary>
@@ -85,6 +89,11 @@ public class PlayerMovement : MonoBehaviour
             Quaternion toRotation = Quaternion.LookRotation(_moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
         }
+        
+        if (_isJumping || _isFalling)
+        {
+            transform.rotation = Quaternion.Euler(0f, transform.rotation.eulerAngles.y, 0f);
+        }
     }
     
     /// <summary>
@@ -92,15 +101,14 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     void HandleDance()
     {
-        if (Input.GetKeyDown(KeyCode.Z)) // Нажатие клавиши Z
+        if (Input.GetKeyDown(KeyCode.Z))
         {
-            _isDancing = true; // Начинаем танцевать
+            _isDancing = true;
         }
-
-        // Прерывание танца, если игрок начинает двигаться
+        
         if (_isDancing && _isMoving)
         {
-            _isDancing = false; // Прерываем танец при движении
+            _isDancing = false;
         }
     }
     
@@ -110,10 +118,16 @@ public class PlayerMovement : MonoBehaviour
     bool IsGrounded()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, _characterController.height / 6 + groundCheckDistance))
+
+        Vector3 colliderCenter = transform.position;
+        Debug.DrawRay(colliderCenter, Vector3.down * groundCheckDistance, Color.red, 1f);
+
+        if (Physics.Raycast(colliderCenter, Vector3.down, out hit, groundCheckDistance, groundLayer))
         {
-            return true;
+            Debug.Log($"Ray hit: {hit.collider.name}");
+            return hit.collider != null;
         }
+        Debug.Log("Ray did not hit anything");
         return false;
     }
 
@@ -126,9 +140,9 @@ public class PlayerMovement : MonoBehaviour
         
         Debug.Log("Is Grounded: " + _isGrounded);
 
-        if (_isGrounded && _velocity.y < 0)
+        if (_isGrounded && _rigidbody.velocity.y < 0)
         {
-            _velocity.y = -2f;
+            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, -0.2f, _rigidbody.velocity.z);
             _isFalling = false;
             if (!_isJumping && !_isLanding)
             {
@@ -137,14 +151,12 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            _velocity.y += gravity * Time.deltaTime;
+            _rigidbody.velocity += Vector3.up * (gravity * Time.deltaTime);
             if (!_isJumping && !_isFalling)
             {
                 _isFalling = true;
             }
         }
-        
-        _characterController.Move(_velocity * Time.deltaTime);
     }
     
     /// <summary>
@@ -152,11 +164,15 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     void HandleJump()
     {
-        if (_isGrounded && Input.GetButtonDown("Jump") && Time.time - _lastJumpTime >= jumpCooldown) // Проверка на землю и нажатие клавиши прыжка
+        if (_isGrounded && Input.GetButtonDown("Jump") && Time.time - _lastJumpTime >= jumpCooldown)
         {
-            _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity); // Расчет начальной скорости для достижения высоты прыжка
-            _isJumping = true;  // Срабатывание анимации прыжка
-            _lastJumpTime = Time.time;
+            if (!_isJumping && !_isFalling)
+            {
+                _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _velocity.y, _rigidbody.velocity.z);
+                _isJumping = true;
+                _lastJumpTime = Time.time;
+            }
         }
     }
 
@@ -165,7 +181,6 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     void UpdateAnimator()
     {
-        // Устанавливаем параметры для анимации в зависимости от состояния
         _animator.SetBool("IsJumping", _isJumping);
         _animator.SetBool("IsFalling", _isFalling);
         _animator.SetBool("IsLanding", _isLanding);
@@ -176,13 +191,18 @@ public class PlayerMovement : MonoBehaviour
         {
             _animator.SetBool("IsRunning", Input.GetKey(KeyCode.LeftShift));
         }
-
-        // После приземления, сбрасываем флаг landing, чтобы анимация не зацикливалась
+        
         if (_isLanding)
         {
-            _isLanding = false; // Сбрасываем флаг приземления
-            _isJumping = false; // Сбрасываем флаг прыжка
+            _isLanding = false;
+            _isJumping = false;
             _lastLandingTime = Time.time;
+        }
+        
+        if (_isGrounded && _rigidbody.velocity.y <= 0.1f && !_isMoving)
+        {
+            _isFalling = false;
+            _isJumping = false;
         }
     }
 }
