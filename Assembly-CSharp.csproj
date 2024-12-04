@@ -45,9 +45,11 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\2022.3.47f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\WeaponAttachment.cs" />
     <Compile Include="Assets\FromAssetStore\Mryotaisu\Scripts\MuryotaisuDoorOpen.cs" />
     <Compile Include="Assets\Scripts\CameraFollow.cs" />
     <Compile Include="Assets\FromAssetStore\Mryotaisu\Scripts\MuryotaisuController.cs" />
+    <Compile Include="Assets\Evil Spirit Katana\Resources\LightFlickering.cs" />
     <Compile Include="Assets\Scripts\PlayerMovement.cs" />
     <None Include="Assets\FromAssetStore\Fantasy Skybox FREE\Readme.txt" />
     <None Include="Assets\FromAssetStore\Mryotaisu\Readme(English and Japanese).txt" />
