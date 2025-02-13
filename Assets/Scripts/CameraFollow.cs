@@ -36,36 +36,27 @@ public class CameraFollow : MonoBehaviour
     {
         if (user == null)
             return;
-
-        // Вращение камеры с помощью мыши
+        
         float horizontalInput = Input.GetAxis("Mouse X") * rotationSpeed;
         float verticalInput = Input.GetAxis("Mouse Y") * rotationSpeed;
-
-        // Обновление углов вращения
+        
         _currentYRotation += horizontalInput;
         _currentXRotation -= verticalInput;
-
-        // Ограничиваем вертикальный угол вращения
+        
         _currentXRotation = Mathf.Clamp(_currentXRotation, minXRotation, maxXRotation);
-
-        // Поворот камеры вокруг игрока
+        
         Quaternion rotation = Quaternion.Euler(_currentXRotation, _currentYRotation, 0);
-
-        // Преобразуем смещение камеры относительно игрока с учетом вращения
+        
         Vector3 desiredPosition = user.position + rotation * offset;
-
-        // Проверка на столкновение с препятствиями
+        
         RaycastHit hit;
         if (Physics.Raycast(user.position, desiredPosition - user.position, out hit, offset.magnitude, collisionLayerMask))
         {
-            // Если есть столкновение, перемещаем камеру немного ближе
             desiredPosition = hit.point + hit.normal * collisionOffset;
         }
-
-        // Плавно двигаем камеру к новой позиции
+        
         transform.position = Vector3.Lerp(transform.position, desiredPosition, followSpeed * Time.deltaTime);
-
-        // Смотрим на игрока
+        
         transform.LookAt(user);
     }
 }

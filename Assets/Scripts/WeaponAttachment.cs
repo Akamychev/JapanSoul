@@ -2,85 +2,64 @@ using UnityEngine;
 
 public class WeaponAttachment : MonoBehaviour
 {
-    [SerializeField] public GameObject katanaPrefab;  // Префаб катаны
-    [SerializeField] public GameObject sheath;        // Ножны
-    [SerializeField] private Transform rightHand;     // Ссылка на правую руку
-    [SerializeField] private Transform spine;         // Ссылка на спину персонажа
+    [Header("Prefabs")]
+    [SerializeField] private GameObject katanaPrefab;        // Префаб катаны
+    [SerializeField] private GameObject katanaSheathed;      // Ссылка на катану в ножнах
+    
+    [Header("Audio Parameters")]
+    [SerializeField] private AudioSource audioSource;        // Источник звука
+    [SerializeField] private AudioClip katanaDrawSound;      // Звук катаны при достании
+    [SerializeField] private AudioClip katanaSheathSound;    // Звук катаны при убирании
 
-    private GameObject katanaInstance;                // Экземпляр катаны
-    private bool isKatanaDrawn = false;               // Флаг, показывающий, достали ли катану
+    private Animator _animator;                              // Экземлпяр аниматора
+    private bool _isKatanaDrawn = false;                     // Флаг, показывающий, достали ли катану
 
-    void Start()
+    private void Start()
     {
-        if (rightHand == null)
-        {
-            Debug.LogError("Right hand bone not found!");
-            return;
-        }
+        _animator = GetComponent<Animator>();
+        
+        if (katanaSheathed != null)
+            katanaSheathed.SetActive(true);
 
-        if (spine == null)
-        {
-            Debug.LogError("Spine bone not found!");
-            return;
-        }
-
-        // Привязываем ножны к спине
-        if (sheath != null)
-        {
-            sheath.transform.SetParent(spine);
-            sheath.transform.localPosition = Vector3.zero;  // Позиционируем ножны на спине
-            sheath.transform.localRotation = Quaternion.identity;  // Без вращения относительно спины
-        }
-
-        // Если катана уже достана, создаем экземпляр и привязываем к правой руке
-        if (katanaPrefab != null && isKatanaDrawn)
-        {
-            katanaInstance = Instantiate(katanaPrefab);
-            katanaInstance.transform.SetParent(rightHand);
-            katanaInstance.transform.localPosition = Vector3.zero;  // Центрируем катану относительно руки
-            katanaInstance.transform.localRotation = Quaternion.identity;  // Без вращения относительно руки
-        }
+        if (katanaPrefab != null)
+            katanaPrefab.SetActive(false);
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.E))
-        {
             ToggleKatana();
-        }
     }
 
     /// <summary>
     /// Функция для смены состояния катаны (достать/убрать)
     /// </summary>
-    void ToggleKatana()
+    private void ToggleKatana()
     {
-        isKatanaDrawn = !isKatanaDrawn;
+        _isKatanaDrawn = !_isKatanaDrawn;
 
-        if (isKatanaDrawn)
-        {
-            // Достаем катану и прикрепляем её к руке
-            if (katanaPrefab != null && rightHand != null)
-            {
-                if (katanaInstance == null)
-                {
-                    katanaInstance = Instantiate(katanaPrefab);  // Создаем экземпляр катаны
-                }
-                katanaInstance.transform.SetParent(rightHand);
-                katanaInstance.transform.localPosition = Vector3.zero;  // Центрируем катану относительно руки
-                katanaInstance.transform.localRotation = Quaternion.identity;  // Без вращения относительно руки
-                katanaInstance.SetActive(true);  // Активируем катану, если она была скрыта
-            }
-        }
-        else
-        {
-            // Убираем катану (отключаем привязку)
-            if (katanaInstance != null)
-            {
-                katanaInstance.transform.SetParent(null);  // Убираем привязку к руке
-                katanaInstance.SetActive(false);  // Скрываем катану, если она не используется
-            }
-            
-        }
+        _animator.SetTrigger(_isKatanaDrawn ? "DrawWeapon" : "SheatheWeapon");
+    }
+    
+    public void OnWeaponDrawnComplete()
+    {
+        if (katanaPrefab != null)
+            katanaPrefab.SetActive(true); 
+
+        if (katanaSheathed != null)
+            katanaSheathed.SetActive(false);
+        
+        audioSource.PlayOneShot(katanaDrawSound);
+    }
+    
+    public void OnWeaponSheathedComplete()
+    {
+        if (katanaPrefab != null)
+            katanaPrefab.SetActive(false);
+
+        if (katanaSheathed != null)
+            katanaSheathed.SetActive(true);
+        
+        audioSource.PlayOneShot(katanaSheathSound);
     }
 }

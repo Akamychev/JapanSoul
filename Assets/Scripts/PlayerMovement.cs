@@ -250,6 +250,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Управление звуком
+    /// </summary>
     void PlaySurfaceSound()
     {
         if (_isJumping || _isDancing)
@@ -262,36 +265,34 @@ public class PlayerMovement : MonoBehaviour
             {
                 runAudioSource.Stop();
             }
-            return; // Прерываем выполнение метода, если игрок прыгает или танцует
+            return;
         }
         
-        // Если игрок не двигается, остановить оба звука
+        
         if (!_isMoving)
         {
             if (walkAudioSource.isPlaying)
             {
-                walkAudioSource.Stop(); // Останавливаем звук шагов
+                walkAudioSource.Stop();
             }
             if (runAudioSource.isPlaying)
             {
-                runAudioSource.Stop(); // Останавливаем звук бега
+                runAudioSource.Stop();
             }
-            return; // Выход из метода, не продолжаем проигрывать звук
+            return;
         }
-
-        // Если игрок бегает
+        
         if (_isRunning)
         {
-            if (!runAudioSource.isPlaying)  // Если звук бега не играет
+            if (!runAudioSource.isPlaying)
             {
                 if (walkAudioSource.isPlaying)
                 {
-                    walkAudioSource.Stop(); // Останавливаем звук шагов
+                    walkAudioSource.Stop();
                 }
 
                 AudioClip clipToPlay = runSound;
-
-                // Выбираем звук для разных поверхностей
+                
                 switch (_currentSurface)
                 {
                     case 7: // Layer "Wood"
@@ -300,28 +301,27 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     default:
                         walkAudioSource.Stop();
-                        clipToPlay = runSound; // Стандартный звук для других поверхностей
+                        clipToPlay = runSound;
                         break;
                 }
 
                 if (clipToPlay != null)
                 {
-                    runAudioSource.PlayOneShot(clipToPlay); // Воспроизводим звук бега
+                    runAudioSource.PlayOneShot(clipToPlay);
                 }
             }
         }
-        else // Если игрок ходит
+        else
         {
-            if (!walkAudioSource.isPlaying)  // Если звук шагов не играет
+            if (!walkAudioSource.isPlaying)
             {
                 if (runAudioSource.isPlaying)
                 {
-                    runAudioSource.Stop(); // Останавливаем звук бега
+                    runAudioSource.Stop();
                 }
 
                 AudioClip clipToPlay = walkSound;
-
-                // Выбираем звук для разных поверхностей
+                
                 switch (_currentSurface)
                 {
                     case 7: // Layer "Wood"
@@ -330,13 +330,13 @@ public class PlayerMovement : MonoBehaviour
                         break;
                     default:
                         walkAudioSource.Stop();
-                        clipToPlay = walkSound; // Стандартный звук для других поверхностей
+                        clipToPlay = walkSound;
                         break;
                 }
 
                 if (clipToPlay != null)
                 {
-                    walkAudioSource.PlayOneShot(clipToPlay); // Воспроизводим звук шагов
+                    walkAudioSource.PlayOneShot(clipToPlay);
                 }
             }
         }
